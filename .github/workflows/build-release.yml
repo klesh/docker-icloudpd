@@ -1,0 +1,48 @@
+name: build-release
+env:
+  DOCKER_PREFIX: ${{ vars.DOCKER_PREFIX}}
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-push-images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build:
+          - name: icloudpd
+            context: .
+            file: ./icloudpd.dockerfile
+    name: Build and push ${{ matrix.build.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to docker.io
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Set outputs
+        id: get_short_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.build.context }}
+          file: ${{ matrix.build.file }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            TAG=${{ github.ref_name }}
+            SHA=${{ steps.get_short_sha.outputs.sha_short }}
+          tags: |
+          ${{ env.DOCKER_PREFIX }}/${{ matrix.build.name }}:${{ github.ref_name }}
+          ${{ env.DOCKER_PREFIX }}/${{ matrix.build.name }}:latest
