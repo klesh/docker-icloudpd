@@ -1,6 +1,4 @@
 name: build-release
-env:
-  DOCKER_PREFIX: ${{ vars.DOCKER_PREFIX}}
 on:
   push:
     tags:
@@ -44,5 +42,5 @@ jobs:
             TAG=${{ github.ref_name }}
             SHA=${{ steps.get_short_sha.outputs.sha_short }}
           tags: |
-          ${{ env.DOCKER_PREFIX }}/${{ matrix.build.name }}:${{ github.ref_name }}
-          ${{ env.DOCKER_PREFIX }}/${{ matrix.build.name }}:latest
+            ${{ vars.DOCKER_PREFIX }}/${{ matrix.build.name }}:${{ github.ref_name }}
+            ${{ vars.DOCKER_PREFIX }}/${{ matrix.build.name }}:latest
